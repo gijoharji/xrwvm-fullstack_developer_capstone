@@ -6,6 +6,8 @@ from django.shortcuts import get_object_or_404, render, redirect
 from django.contrib.auth import logout
 from django.contrib import messages
 from datetime import datetime
+from .models import CarMake, CarModel
+
 
 from django.http import JsonResponse
 from django.contrib.auth import login, authenticate, logout
@@ -16,57 +18,78 @@ from django.views.decorators.csrf import csrf_exempt
 # Get an instance of a logger
 logger = logging.getLogger(__name__)
 
-# Create your views here.
+# Function to populate the database with CarMake and CarModel data
+def initiate():
+    car_make_data = [
+        {"name": "NISSAN", "description": "Great cars. Japanese technology"},
+        {"name": "Mercedes", "description": "Great cars. German technology"},
+        {"name": "Audi", "description": "Great cars. German technology"},
+        {"name": "Kia", "description": "Great cars. Korean technology"},
+        {"name": "Toyota", "description": "Great cars. Japanese technology"},
+    ]
 
-# Create a `login_user` view to handle sign in request
+    car_make_instances = []
+    for data in car_make_data:
+        car_make_instances.append(CarMake.objects.create(name=data['name'], description=data['description']))
+
+    car_model_data = [
+        {"name": "Pathfinder", "type": "SUV", "year": 2023, "car_make": car_make_instances[0]},
+        {"name": "Qashqai", "type": "SUV", "year": 2023, "car_make": car_make_instances[0]},
+        {"name": "XTRAIL", "type": "SUV", "year": 2023, "car_make": car_make_instances[0]},
+        {"name": "A-Class", "type": "SUV", "year": 2023, "car_make": car_make_instances[1]},
+        {"name": "C-Class", "type": "SUV", "year": 2023, "car_make": car_make_instances[1]},
+        {"name": "E-Class", "type": "SUV", "year": 2023, "car_make": car_make_instances[1]},
+        {"name": "A4", "type": "SUV", "year": 2023, "car_make": car_make_instances[2]},
+        {"name": "A5", "type": "SUV", "year": 2023, "car_make": car_make_instances[2]},
+        {"name": "A6", "type": "SUV", "year": 2023, "car_make": car_make_instances[2]},
+        {"name": "Sorrento", "type": "SUV", "year": 2023, "car_make": car_make_instances[3]},
+        {"name": "Carnival", "type": "SUV", "year": 2023, "car_make": car_make_instances[3]},
+        {"name": "Cerato", "type": "Sedan", "year": 2023, "car_make": car_make_instances[3]},
+        {"name": "Corolla", "type": "Sedan", "year": 2023, "car_make": car_make_instances[4]},
+        {"name": "Camry", "type": "Sedan", "year": 2023, "car_make": car_make_instances[4]},
+        {"name": "Kluger", "type": "SUV", "year": 2023, "car_make": car_make_instances[4]},
+    ]
+
+    for data in car_model_data:
+        CarModel.objects.create(name=data['name'], car_make=data['car_make'], type=data['type'], year=data['year'])
+
+# View to get the list of cars
+def get_cars(request):
+    count = CarMake.objects.filter().count()
+    if count == 0:
+        initiate()
+    car_models = CarModel.objects.select_related('car_make')
+    cars = []
+    for car_model in car_models:
+        cars.append({"CarModel": car_model.name, "CarMake": car_model.car_make.name})
+    return JsonResponse({"CarModels": cars})
+
+# Other view functions...
+
 @csrf_exempt
 def login_user(request):
-    # Check if the request method is POST
     if request.method == "POST":
-        # Get the username and password from the request body
         data = json.loads(request.body)
         username = data.get('userName')
         password = data.get('password')
-
-        # Try to authenticate the user with the provided credentials
         user = authenticate(username=username, password=password)
-        
-        # If user is authenticated successfully
         if user is not None:
-            # Log the user in
             login(request, user)
-            # Return a JSON response with success status
             return JsonResponse({"userName": username, "status": "Authenticated"})
         else:
-            # If authentication fails, return a failure message
             return JsonResponse({"userName": username, "status": "Authentication Failed"}, status=401)
-    
-    # If request method is not POST, return a bad request response
     return JsonResponse({"error": "Invalid request method"}, status=400)
 
-# Additional views can be implemented below...
-# Create a `logout_request` view to handle sign out request
-# def logout_request(request):
 def logout_user(request):
-    # Check if the user is authenticated before logging out
     if request.user.is_authenticated:
-        username = request.user.username  # Get the username of the currently logged-in user
-        logout(request)  # Log out the user
-        data = {"userName": username}
+        username = request.user.username
+        logout(request)
+        return JsonResponse({"userName": username})
     else:
-        data = {"userName": ""}
-    
-    # Return a JSON response with the username
-    return JsonResponse(data)
-#     ...
+        return JsonResponse({"userName": ""})
 
-# Create a `registration` view to handle sign up request
 @csrf_exempt
 def registration(request):
-    # Initialize context and response data
-    context = {}
-
-    # Load the data from the request body
     data = json.loads(request.body)
     username = data.get('userName')
     password = data.get('password')
@@ -74,33 +97,10 @@ def registration(request):
     last_name = data.get('lastName')
     email = data.get('email')
 
-    # Check if username or email already exists
-    username_exist = False
-    email_exist = False
-
     try:
-        # Check if a user with the same username already exists
         User.objects.get(username=username)
-        username_exist = True
+        return JsonResponse({"userName": username, "error": "Already Registered"})
     except User.DoesNotExist:
-        # Log that this is a new user if the username does not exist
-        logger.debug(f"{username} is a new user")
-
-    # If the username does not already exist, proceed with registration
-    if not username_exist:
-        # Create the new user
         user = User.objects.create_user(username=username, first_name=first_name, last_name=last_name, password=password, email=email)
-
-        # Log in the new user
         login(request, user)
-
-        # Return a JSON response indicating successful registration and login
-        data = {"userName": username, "status": "Authenticated"}
-        return JsonResponse(data)
-    else:
-        # If the username already exists, return an error message
-        data = {"userName": username, "error": "Already Registered"}
-        return JsonResponse(data)
-# @csrf_exempt
-# def registration(request):
-#     ...
+        return JsonResponse({"userName": username, "status": "Authenticated"})
