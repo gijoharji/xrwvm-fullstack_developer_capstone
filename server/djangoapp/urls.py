@@ -1,4 +1,3 @@
-# Uncomment the imports before you add the code
 from django.urls import path  # Import path to define URL patterns
 from django.conf.urls.static import static
 from django.conf import settings
@@ -10,9 +9,15 @@ urlpatterns = [
     # Path for login
     path(route='login', view=views.login_user, name='login'),
     path('logout/', views.logout_user, name='logout'),
-    # Uncomment or add additional paths here for registration, reviews, etc.
     path('register/', views.registration, name='register'),
-    # path('dealer-reviews/', views.get_dealer_reviews, name='dealer_reviews'),
-    # path('add-review/', views.add_review, name='add_review'),
+    
+    # Path for fetching cars
     path(route='get_cars', view=views.get_cars, name='getcars'),
+    
+    # Path for fetching dealerships
+    path(route='get_dealers', view=views.get_dealerships, name='get_dealers'),
+    path(route='get_dealers/<str:state>', view=views.get_dealerships, name='get_dealers_by_state'),
+
+    # Other paths
+    path(route='dealer/<int:dealer_id>', view=views.get_dealer_details, name='dealer_details'),
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

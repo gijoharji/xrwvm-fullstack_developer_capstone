@@ -1,16 +1,12 @@
-# Uncomment the required imports before adding the code
 from django.shortcuts import render, redirect
-from django.http import HttpResponseRedirect, HttpResponse
+from django.http import HttpResponseRedirect, HttpResponse, JsonResponse
 from django.contrib.auth.models import User
-from django.shortcuts import get_object_or_404, render, redirect
-from django.contrib.auth import logout
+from django.contrib.auth import logout, login, authenticate
+from django.shortcuts import get_object_or_404
 from django.contrib import messages
 from datetime import datetime
 from .models import CarMake, CarModel
-
-
-from django.http import JsonResponse
-from django.contrib.auth import login, authenticate, logout
+from .restapis import get_request
 import logging
 import json
 from django.views.decorators.csrf import csrf_exempt
@@ -64,7 +60,14 @@ def get_cars(request):
         cars.append({"CarModel": car_model.name, "CarMake": car_model.car_make.name})
     return JsonResponse({"CarModels": cars})
 
-# Other view functions...
+# View to get dealerships
+def get_dealerships(request, state="All"):
+    if state == "All":
+        endpoint = "/fetchDealers"
+    else:
+        endpoint = "/fetchDealers/" + state
+    dealerships = get_request(endpoint)
+    return JsonResponse({"status": 200, "dealers": dealerships})
 
 @csrf_exempt
 def login_user(request):
@@ -79,6 +82,15 @@ def login_user(request):
         else:
             return JsonResponse({"userName": username, "status": "Authentication Failed"}, status=401)
     return JsonResponse({"error": "Invalid request method"}, status=400)
+
+def get_dealer_details(request, dealer_id):
+    if dealer_id:
+        endpoint = "/fetchDealer/" + str(dealer_id)
+        dealership = get_request(endpoint)
+        return JsonResponse({"status": 200, "dealer": dealership})
+    else:
+        return JsonResponse({"status": 400, "message": "Bad Request"})
+
 
 def logout_user(request):
     if request.user.is_authenticated:

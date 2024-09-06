@@ -29,7 +29,6 @@ def get_request(endpoint, **kwargs):
         print(f"Network exception occurred: {e}")
         return None
 
-
 # Function to analyze review sentiments using the sentiment analyzer
 def analyze_review_sentiments(text):
     request_url = f"{sentiment_analyzer_url}/analyze/{text}"
