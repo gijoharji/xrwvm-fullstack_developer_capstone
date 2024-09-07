@@ -31,7 +31,16 @@ class CarModel(models.Model):
     def __str__(self):
         return f"{self.name} ({self.type})"
 
+# Dealer Model
+class Dealer(models.Model):
+    full_name = models.CharField(max_length=255)
+    city = models.CharField(max_length=255)
+    state = models.CharField(max_length=2)
+    address = models.CharField(max_length=255)
+    zip = models.CharField(max_length=10)
 
+    def __str__(self):
+        return self.full_name
 # <HINT> Create a Car Make model `class CarMake(models.Model)`:
 # - Name
 # - Description

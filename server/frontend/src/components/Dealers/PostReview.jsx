@@ -19,6 +19,7 @@ const PostReview = () => {
   let id =params.id;
   let dealer_url = root_url+`djangoapp/dealer/${id}`;
   let review_url = root_url+`djangoapp/add_review`;
+  //let review_url = root_url + `djangoapp/add_review/`;  // Add trailing slash
   let carmodels_url = root_url+`djangoapp/get_cars`;
 
   const postreview = async ()=>{
